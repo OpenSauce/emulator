@@ -1,37 +1,45 @@
-pub mod cpu;
-pub mod flags;
+mod cartridge;
+mod cpu;
+mod flags;
+mod mmu;
+mod ppu;
+
+use cartridge::Cartridge;
+use cpu::Cpu;
+use mmu::Mmu;
+use ppu::Ppu;
 
 use anyhow::Result;
 
 pub struct Emulator {
-    cpu: cpu::Cpu,
-    //     mmu: mmu::MMU,
-    //     ppu: ppu::PPU,
+    cpu: Cpu,
+    cartridge: Cartridge,
+    mmu: Mmu,
+    ppu: ppu::Ppu,
     //     input: input::Joypad,
     //     timer: timer::Timer,
     //     interrupts: interrupts::InterruptController,
-    //     cartridge: cartridge::Cartridge,
 }
 
 impl Emulator {
     pub fn new() -> Emulator {
         Emulator {
-            cpu: cpu::Cpu::new(),
-            //         mmu: mmu::MMU::new(),
-            //         ppu: ppu::PPU::new(),
-            //         input: input::Joypad::new(),
-            //         timer: timer::Timer::new(),
-            //         interrupts: interrupts::InterruptController::new(),
-            //         cartridge: cartridge::Cartridge::new(),
+            cpu: Cpu::new(),
+            cartridge: Cartridge::new(),
+            mmu: Mmu::new(),
+            ppu: Ppu::new(),
         }
     }
 
     pub fn load_rom(&mut self, path: &str) -> Result<()> {
-        print!("Loading ROM: {}", path);
+        self.cartridge.load(path)?;
+        self.mmu.load_cartridge(&self.cartridge);
         Ok(())
     }
 
     pub fn run(&mut self) {
-        print!("Running emulator...");
+        loop {
+            self.cpu.step(&mut self.mmu, &mut self.ppu);
+        }
     }
 }
