@@ -1,0 +1,49 @@
+# Generated files
+/target/
+
+# Cargo specific
+**/Cargo.lock
+**/target/
+**/*.rs.bk
+
+# Build artifacts
+/debug/
+/release/
+
+# Rust/Cargo tools
+/.cargo/
+.cargo-lock
+
+# Editor/IDE files
+**/.vscode/
+**/.idea/
+**/*.iml
+
+# Miscellaneous
+*.rs.bk
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Rustup specific
+.rustup/
+
+# Clippy and Rustfmt
+clippy.toml
+rustfmt.toml
+
+# Binary output
+*.rmeta
+*.dSYM/
+*.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Optional: If using a debugger
+*.lldb
+*.gdb
