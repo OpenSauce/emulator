@@ -6,7 +6,7 @@ mod emulator;
 fn main() -> Result<()> {
     let matches = Command::new("Gameboy Emulator")
         .version("0.1.0")
-        .author("Leigh Lawley")
+        .author("OpenSauce")
         .about("A simple Game Boy emulator written in Rust")
         .arg(Arg::new("rom").required(true).help("Path to the ROM file"))
         .get_matches();
