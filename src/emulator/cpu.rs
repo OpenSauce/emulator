@@ -65,10 +65,8 @@ impl Cpu {
                 ArithmaticTarget::HL => {
                     panic!("Add HL Not implemented");
                 }
-                _ => panic!("Unknown target for Add instruction"),
             },
             Instruction::Nop() => (),
-            _ => (),
         }
     }
 
