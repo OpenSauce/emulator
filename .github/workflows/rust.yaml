@@ -30,9 +30,6 @@ jobs:
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: cargo-${{ runner.os }}-
 
-      - name: 📦 Build
-        run: cargo build --release --verbose
-
       - name: ✅ Run Tests
         run: cargo test --verbose
 
@@ -41,3 +38,7 @@ jobs:
 
       - name: 📝 Check Formatting
         run: cargo fmt -- --check
+
+      - name: 📦 Build (Optional Release Build)
+        if: success()
+        run: cargo build --release --verbose
