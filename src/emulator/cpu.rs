@@ -33,7 +33,7 @@ impl Cpu {
 
     fn execute_instruction(&mut self, _mmu: &mut Mmu, instruction: Instruction) {
         match instruction {
-            Instruction::ADD(target) => match target {
+            Instruction::Add(target) => match target {
                 ArithmaticTarget::A => {
                     let new_value = self.add(self.registers.a);
                     self.registers.a = new_value;
@@ -63,11 +63,11 @@ impl Cpu {
                     self.registers.a = new_value;
                 }
                 ArithmaticTarget::HL => {
-                    panic!("ADD HL Not implemented");
+                    panic!("Add HL Not implemented");
                 }
-                _ => panic!("Unknown target for ADD instruction"),
+                _ => panic!("Unknown target for Add instruction"),
             },
-            Instruction::NOP() => (),
+            Instruction::Nop() => (),
             _ => (),
         }
     }
@@ -86,22 +86,22 @@ impl Cpu {
 }
 
 enum Instruction {
-    ADD(ArithmaticTarget),
-    NOP(),
+    Add(ArithmaticTarget),
+    Nop(),
 }
 
 impl Instruction {
     fn from_byte(byte: u8) -> Option<Self> {
         match byte {
-            0x00 => Some(Instruction::NOP()),
-            0x80 => Some(Instruction::ADD(ArithmaticTarget::B)),
-            0x81 => Some(Instruction::ADD(ArithmaticTarget::C)),
-            0x82 => Some(Instruction::ADD(ArithmaticTarget::D)),
-            0x83 => Some(Instruction::ADD(ArithmaticTarget::E)),
-            0x84 => Some(Instruction::ADD(ArithmaticTarget::H)),
-            0x85 => Some(Instruction::ADD(ArithmaticTarget::L)),
-            0x86 => Some(Instruction::ADD(ArithmaticTarget::HL)),
-            0x87 => Some(Instruction::ADD(ArithmaticTarget::A)),
+            0x00 => Some(Instruction::Nop()),
+            0x80 => Some(Instruction::Add(ArithmaticTarget::B)),
+            0x81 => Some(Instruction::Add(ArithmaticTarget::C)),
+            0x82 => Some(Instruction::Add(ArithmaticTarget::D)),
+            0x83 => Some(Instruction::Add(ArithmaticTarget::E)),
+            0x84 => Some(Instruction::Add(ArithmaticTarget::H)),
+            0x85 => Some(Instruction::Add(ArithmaticTarget::L)),
+            0x86 => Some(Instruction::Add(ArithmaticTarget::HL)),
+            0x87 => Some(Instruction::Add(ArithmaticTarget::A)),
             _ => None,
         }
     }
