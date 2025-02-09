@@ -1,0 +1,43 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🦀 Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: ⚡ Cache Cargo Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: ✅ Run Tests
+        run: cargo test --verbose
+
+      - name: 🔍 Run Clippy (Linting)
+        run: cargo clippy -- -D warnings -A dead_code
+
+      - name: 📝 Check Formatting
+        run: cargo fmt -- --check
+
+      - name: 📦 Build (Optional Release Build)
+        if: success()
+        run: cargo build --release --verbose
