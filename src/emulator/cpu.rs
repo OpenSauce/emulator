@@ -1,6 +1,4 @@
-use core::panic;
 use std::collections::HashMap;
-use std::fmt;
 
 use crate::emulator::flags::FlagsRegister;
 use crate::emulator::mmu::Mmu;
@@ -94,7 +92,7 @@ impl Cpu {
                     println!("Add HL Not implemented");
                 }
             },
-            Instruction::JPNZ() => {
+            Instruction::Jpnz() => {
                 println!("JPNZ Not implemented");
             }
             Instruction::Nop() => (),
@@ -118,7 +116,7 @@ impl Cpu {
 enum Instruction {
     Add(ArithmaticTarget),
     Nop(),
-    JPNZ(),
+    Jpnz(),
 }
 
 impl Instruction {
@@ -133,7 +131,7 @@ impl Instruction {
             0x85 => Some(Instruction::Add(ArithmaticTarget::L)),
             0x86 => Some(Instruction::Add(ArithmaticTarget::HL)),
             0x87 => Some(Instruction::Add(ArithmaticTarget::A)),
-            0xC3 => Some(Instruction::JPNZ()),
+            0xC3 => Some(Instruction::Jpnz()),
             _ => None,
         }
     }
