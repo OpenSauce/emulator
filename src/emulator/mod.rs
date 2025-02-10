@@ -37,9 +37,9 @@ impl Emulator {
         Ok(())
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, looping: bool) {
         loop {
-            self.cpu.step(&mut self.mmu, &mut self.ppu);
+            self.cpu.step(looping, &mut self.mmu, &mut self.ppu);
         }
     }
 }

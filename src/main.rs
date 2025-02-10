@@ -18,6 +18,6 @@ fn main() -> Result<()> {
     let mut gameboy = emulator::Emulator::new();
     gameboy.load_rom(rom_path).context("Failed to load ROM")?;
 
-    gameboy.run();
+    gameboy.run(false);
     Ok(())
 }
