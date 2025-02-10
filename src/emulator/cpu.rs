@@ -1,4 +1,6 @@
 use core::panic;
+use std::collections::HashMap;
+use std::fmt;
 
 use crate::emulator::flags::FlagsRegister;
 use crate::emulator::mmu::Mmu;
@@ -8,6 +10,9 @@ pub struct Cpu {
     registers: Registers,
     pc: u16,
     sp: u16,
+    success: i32,
+    fail: i32,
+    running: HashMap<Instruction, i32>,
 }
 
 impl Cpu {
@@ -16,18 +21,41 @@ impl Cpu {
             registers: Registers::new(),
             pc: 0x100,
             sp: 0xFFFE,
+            success: 0,
+            fail: 0,
+            running: HashMap::new(),
         }
     }
 
-    pub fn step(&mut self, mmu: &mut Mmu, _ppu: &mut Ppu) {
+    pub fn step(&mut self, looping: bool, mmu: &mut Mmu, _ppu: &mut Ppu) {
         let op_code = mmu.read_byte(self.pc);
-        self.pc = self.pc.wrapping_add(1);
+        if looping {
+            self.pc = self.pc.wrapping_add(1);
+        } else {
+            if self.pc == 0xFFFF {
+                println!("Running: {:?}", self.running);
+                println!("Success: {}, fail {}", self.success, self.fail);
+                return;
+            }
+            self.pc += 1;
+        }
 
         let instruction = match Instruction::from_byte(op_code) {
             Some(instruction) => instruction,
-            None => return,
+            None => {
+                println!("Unknown instruction: {:X}", op_code);
+                self.fail += 1;
+                return;
+            }
         };
 
+        self.success += 1;
+        println!("Executing instruction: {:?}", instruction);
+
+        self.running
+            .entry(instruction.clone())
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
         self.execute_instruction(mmu, instruction);
     }
 
@@ -63,9 +91,12 @@ impl Cpu {
                     self.registers.a = new_value;
                 }
                 ArithmaticTarget::HL => {
-                    panic!("Add HL Not implemented");
+                    println!("Add HL Not implemented");
                 }
             },
+            Instruction::JPNZ() => {
+                println!("JPNZ Not implemented");
+            }
             Instruction::Nop() => (),
         }
     }
@@ -83,9 +114,11 @@ impl Cpu {
     }
 }
 
+#[derive(Debug, PartialEq, Hash, Eq, Clone)]
 enum Instruction {
     Add(ArithmaticTarget),
     Nop(),
+    JPNZ(),
 }
 
 impl Instruction {
@@ -100,11 +133,13 @@ impl Instruction {
             0x85 => Some(Instruction::Add(ArithmaticTarget::L)),
             0x86 => Some(Instruction::Add(ArithmaticTarget::HL)),
             0x87 => Some(Instruction::Add(ArithmaticTarget::A)),
+            0xC3 => Some(Instruction::JPNZ()),
             _ => None,
         }
     }
 }
 
+#[derive(Debug, PartialEq, Hash, Eq, Clone)]
 enum ArithmaticTarget {
     A,
     B,
