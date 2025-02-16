@@ -1,7 +1,6 @@
 use core::fmt;
 use std::collections::HashMap;
-use std::os::unix::prelude;
-use std::thread::{self, Thread};
+use std::thread;
 use std::time;
 
 use crate::emulator::flags::FlagsRegister;
@@ -68,7 +67,7 @@ impl Cpu {
     fn execute_instruction(&mut self, _mmu: &mut Mmu, instruction: Instruction) {
         match instruction {
             Instruction::Nop() => (),
-            Instruction::Halt() => return,
+            Instruction::Halt() => (),
             Instruction::Add(target) => match target {
                 ArithmaticTarget::A => {
                     let new_value = self.add(self.registers.a);
@@ -105,6 +104,9 @@ impl Cpu {
             Instruction::Jpnz() => {
                 println!("JPNZ Not implemented");
             }
+            Instruction::Rlc(_target) => {
+                println!("RLC Not implemented");
+            }
         }
     }
 
@@ -137,6 +139,7 @@ enum Instruction {
     Nop(),
     Jpnz(),
     Halt(),
+    Rlc(ArithmaticTarget),
 }
 
 impl Instruction {
@@ -150,6 +153,7 @@ impl Instruction {
 
     fn from_byte_prefixed(byte: u8) -> Option<Self> {
         match byte {
+            0x00 => Some(Instruction::Rlc(ArithmaticTarget::B)),
             _ => None,
         }
     }
