@@ -1,8 +1,14 @@
+use core::fmt;
 use std::collections::HashMap;
+use std::thread;
+use std::time;
 
 use crate::emulator::flags::FlagsRegister;
 use crate::emulator::mmu::Mmu;
 use crate::emulator::ppu::Ppu;
+
+const MEMORY_SIZE: u16 = 0xFFFF;
+const PREFIXED_OPCODE: u8 = 0xCB;
 
 pub struct Cpu {
     registers: Registers,
@@ -25,23 +31,24 @@ impl Cpu {
         }
     }
 
-    pub fn step(&mut self, looping: bool, mmu: &mut Mmu, _ppu: &mut Ppu) {
-        let op_code = mmu.read_byte(self.pc);
-        if looping {
-            self.pc = self.pc.wrapping_add(1);
-        } else {
-            if self.pc == 0xFFFF {
-                println!("Running: {:?}", self.running);
-                println!("Success: {}, fail {}", self.success, self.fail);
-                return;
-            }
-            self.pc += 1;
+    pub fn step(&mut self, mmu: &mut Mmu, _ppu: &mut Ppu) {
+        let mut instruction_byte = mmu.read_byte(self.pc);
+        self.pc = self.pc.wrapping_add(1);
+        if self.pc == MEMORY_SIZE {
+            println!("{:?}", self);
+            thread::sleep(time::Duration::from_secs(5));
+            return;
         }
 
-        let instruction = match Instruction::from_byte(op_code) {
+        let prefixed = instruction_byte == PREFIXED_OPCODE;
+        if prefixed {
+            instruction_byte = mmu.read_byte(self.pc);
+        }
+
+        let instruction = match Instruction::from_byte(instruction_byte, prefixed) {
             Some(instruction) => instruction,
             None => {
-                println!("Unknown instruction: {:X}", op_code);
+                println!("Unknown instruction: {:X}", instruction_byte);
                 self.fail += 1;
                 return;
             }
@@ -59,6 +66,8 @@ impl Cpu {
 
     fn execute_instruction(&mut self, _mmu: &mut Mmu, instruction: Instruction) {
         match instruction {
+            Instruction::Nop() => (),
+            Instruction::Halt() => (),
             Instruction::Add(target) => match target {
                 ArithmaticTarget::A => {
                     let new_value = self.add(self.registers.a);
@@ -95,7 +104,9 @@ impl Cpu {
             Instruction::Jpnz() => {
                 println!("JPNZ Not implemented");
             }
-            Instruction::Nop() => (),
+            Instruction::Rlc(_target) => {
+                println!("RLC Not implemented");
+            }
         }
     }
 
@@ -112,17 +123,45 @@ impl Cpu {
     }
 }
 
+impl fmt::Debug for Cpu {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Success: {}, fail: {}, running: {:?}",
+            self.success, self.fail, self.running
+        )
+    }
+}
+
 #[derive(Debug, PartialEq, Hash, Eq, Clone)]
 enum Instruction {
     Add(ArithmaticTarget),
     Nop(),
     Jpnz(),
+    Halt(),
+    Rlc(ArithmaticTarget),
 }
 
 impl Instruction {
-    fn from_byte(byte: u8) -> Option<Self> {
+    fn from_byte(byte: u8, prefixed: bool) -> Option<Self> {
+        if prefixed {
+            Self::from_byte_prefixed(byte)
+        } else {
+            Self::from_byte_non_prefixed(byte)
+        }
+    }
+
+    fn from_byte_prefixed(byte: u8) -> Option<Self> {
+        match byte {
+            0x00 => Some(Instruction::Rlc(ArithmaticTarget::B)),
+            _ => None,
+        }
+    }
+
+    fn from_byte_non_prefixed(byte: u8) -> Option<Self> {
         match byte {
             0x00 => Some(Instruction::Nop()),
+            0x76 => Some(Instruction::Halt()),
             0x80 => Some(Instruction::Add(ArithmaticTarget::B)),
             0x81 => Some(Instruction::Add(ArithmaticTarget::C)),
             0x82 => Some(Instruction::Add(ArithmaticTarget::D)),
