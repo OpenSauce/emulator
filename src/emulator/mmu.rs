@@ -16,10 +16,18 @@ impl Mmu {
     }
 
     pub fn read_byte(&self, address: u16) -> u8 {
+        if address as usize >= self.memory.len() {
+            panic!("Invalid memory address: {:X}", address);
+        }
+
         self.memory[address as usize]
     }
 
     pub fn set_byte(&mut self, address: u16, value: u8) {
+        if address as usize >= self.memory.len() {
+            panic!("Invalid memory address: {:X}", address);
+        }
+
         self.memory[address as usize] = value;
     }
 }
