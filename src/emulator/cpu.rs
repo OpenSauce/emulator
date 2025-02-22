@@ -101,7 +101,7 @@ impl Cpu {
                     println!("Add HL Not implemented");
                 }
             },
-            Instruction::Jpnz() => {
+            Instruction::Jp() => {
                 println!("JPNZ Not implemented");
             }
             Instruction::Rlc(_target) => {
@@ -137,7 +137,7 @@ impl fmt::Debug for Cpu {
 enum Instruction {
     Add(ArithmaticTarget),
     Nop(),
-    Jpnz(),
+    Jp(),
     Halt(),
     Rlc(ArithmaticTarget),
 }
@@ -170,7 +170,7 @@ impl Instruction {
             0x85 => Some(Instruction::Add(ArithmaticTarget::L)),
             0x86 => Some(Instruction::Add(ArithmaticTarget::HL)),
             0x87 => Some(Instruction::Add(ArithmaticTarget::A)),
-            0xC3 => Some(Instruction::Jpnz()),
+            0xC3 => Some(Instruction::Jp()),
             _ => None,
         }
     }
@@ -214,7 +214,7 @@ impl Registers {
     }
 
     fn get_bc(&self) -> u16 {
-        (self.b as u16) << 8 | self.c as u16
+        ((self.b as u16) << 8) | self.c as u16
     }
 
     fn set_bc(&mut self, value: u16) {
@@ -223,7 +223,7 @@ impl Registers {
     }
 
     fn get_de(&self) -> u16 {
-        (self.d as u16) << 8 | self.e as u16
+        ((self.d as u16) << 8) | self.e as u16
     }
 
     fn set_de(&mut self, value: u16) {
@@ -232,7 +232,7 @@ impl Registers {
     }
 
     fn get_hl(&self) -> u16 {
-        (self.h as u16) << 8 | self.l as u16
+        ((self.h as u16) << 8) | self.l as u16
     }
 
     fn set_hl(&mut self, value: u16) {
