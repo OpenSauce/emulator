@@ -47,6 +47,16 @@ impl Cpu {
                 println!("HALT not implemented");
                 self.pc.wrapping_add(1)
             }
+            Instruction::Load(target) => {
+                match target {
+                    LoadTarget::SP => {
+                        let most_significant_byte = mmu.read_byte(self.pc + 2) as u16;
+                        let least_significant_byte = mmu.read_byte(self.pc + 1) as u16;
+                        self.sp = (most_significant_byte << 8) | least_significant_byte;
+                    }
+                }
+                self.pc.wrapping_add(3)
+            }
             Instruction::Inc(target) => {
                 match target {
                     IncTarget::BC => {
@@ -196,6 +206,11 @@ enum ArithmeticTarget {
 }
 
 #[derive(Debug)]
+enum LoadTarget {
+    SP,
+}
+
+#[derive(Debug)]
 enum IncTarget {
     BC,
     DE,
@@ -219,6 +234,7 @@ enum Instruction {
     Rlc(ArithmeticTarget),
     Di(),
     Ei(),
+    Load(LoadTarget),
 }
 
 impl Instruction {
@@ -241,12 +257,13 @@ impl Instruction {
         match byte {
             0x00 => Some(Instruction::Nop()),
             0x03 => Some(Instruction::Inc(IncTarget::BC)),
-            0x13 => Some(Instruction::Inc(IncTarget::DE)),
-            0x23 => Some(Instruction::Inc(IncTarget::HL)),
-            0x33 => Some(Instruction::Inc(IncTarget::SP)),
             0x04 => Some(Instruction::Inc(IncTarget::B)),
+            0x13 => Some(Instruction::Inc(IncTarget::DE)),
             0x14 => Some(Instruction::Inc(IncTarget::D)),
+            0x23 => Some(Instruction::Inc(IncTarget::HL)),
             0x24 => Some(Instruction::Inc(IncTarget::H)),
+            0x31 => Some(Instruction::Load(LoadTarget::SP)),
+            0x33 => Some(Instruction::Inc(IncTarget::SP)),
             0x34 => Some(Instruction::IncHl()),
             0x76 => Some(Instruction::Halt()),
             0x80 => Some(Instruction::Add(ArithmeticTarget::B)),
