@@ -161,42 +161,42 @@ impl Cpu {
                 match target {
                     ArithmeticTarget::A => {
                         let msb = (self.registers.a & 0b1000_0000) >> 7;
-                        self.registers.a = self.registers.a << 1 | msb;
+                        self.registers.a = (self.registers.a << 1) | msb;
                         self.registers.f.carry = msb == 1;
                     }
                     ArithmeticTarget::B => {
                         let msb = (self.registers.b & 0b1000_0000) >> 7;
-                        self.registers.b = self.registers.b << 1 | msb;
+                        self.registers.b = (self.registers.b << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.b == 0;
                     }
                     ArithmeticTarget::C => {
                         let msb = (self.registers.c & 0b1000_0000) >> 7;
-                        self.registers.c = self.registers.c << 1 | msb;
+                        self.registers.c = (self.registers.c << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.c == 0;
                     }
                     ArithmeticTarget::D => {
                         let msb = (self.registers.d & 0b1000_0000) >> 7;
-                        self.registers.d = self.registers.d << 1 | msb;
+                        self.registers.d = (self.registers.d << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.d == 0;
                     }
                     ArithmeticTarget::E => {
                         let msb = (self.registers.e & 0b1000_0000) >> 7;
-                        self.registers.e = self.registers.e << 1 | msb;
+                        self.registers.e = (self.registers.e << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.e == 0;
                     }
                     ArithmeticTarget::H => {
                         let msb = (self.registers.h & 0b1000_0000) >> 7;
-                        self.registers.h = self.registers.h << 1 | msb;
+                        self.registers.h = (self.registers.h << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.h == 0;
                     }
                     ArithmeticTarget::L => {
                         let msb = (self.registers.l & 0b1000_0000) >> 7;
-                        self.registers.l = self.registers.l << 1 | msb;
+                        self.registers.l = (self.registers.l << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.l == 0;
                     }
