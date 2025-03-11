@@ -139,7 +139,7 @@ impl Cpu {
                 self.registers.set_hl(new_value);
                 self.pc.wrapping_add(1)
             }
-            Instruction::Jp(test) => {
+            Instruction::Jump(test) => {
                 let should_jump = match test {
                     JumpTest::NotZero => !self.registers.f.zero,
                     JumpTest::Zero => self.registers.f.zero,
@@ -156,7 +156,7 @@ impl Cpu {
                 let least_significant_byte = mmu.read_byte(self.pc + 1) as u16;
                 (most_significant_byte << 8) | least_significant_byte
             }
-            Instruction::Jphl() => self.registers.get_hl(),
+            Instruction::JumpHl() => self.registers.get_hl(),
             Instruction::Rlc(_target) => {
                 println!("RLC not implemented");
                 self.pc.wrapping_add(1)
@@ -228,8 +228,8 @@ enum Instruction {
     IncHl(),
     Add(ArithmeticTarget),
     AddHl(),
-    Jp(JumpTest),
-    Jphl(),
+    Jump(JumpTest),
+    JumpHl(),
     Halt(),
     Rlc(ArithmeticTarget),
     Di(),
@@ -274,12 +274,12 @@ impl Instruction {
             0x85 => Some(Instruction::Add(ArithmeticTarget::L)),
             0x86 => Some(Instruction::AddHl()),
             0x87 => Some(Instruction::Add(ArithmeticTarget::A)),
-            0xC2 => Some(Instruction::Jp(JumpTest::NotZero)),
-            0xC3 => Some(Instruction::Jp(JumpTest::Always)),
-            0xCA => Some(Instruction::Jp(JumpTest::Zero)),
-            0xD2 => Some(Instruction::Jp(JumpTest::NotCarry)),
-            0xDA => Some(Instruction::Jp(JumpTest::Carry)),
-            0xE9 => Some(Instruction::Jphl()),
+            0xC2 => Some(Instruction::Jump(JumpTest::NotZero)),
+            0xC3 => Some(Instruction::Jump(JumpTest::Always)),
+            0xCA => Some(Instruction::Jump(JumpTest::Zero)),
+            0xD2 => Some(Instruction::Jump(JumpTest::NotCarry)),
+            0xDA => Some(Instruction::Jump(JumpTest::Carry)),
+            0xE9 => Some(Instruction::JumpHl()),
             0xF3 => Some(Instruction::Di()),
             0xFB => Some(Instruction::Ei()),
             _ => None,
