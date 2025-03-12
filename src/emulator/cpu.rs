@@ -49,52 +49,85 @@ impl Cpu {
             }
             Instruction::Load(target) => {
                 match target {
-                    LoadTarget::SP => {
+                    Target::SP => {
                         let most_significant_byte = mmu.read_byte(self.pc + 2) as u16;
                         let least_significant_byte = mmu.read_byte(self.pc + 1) as u16;
                         self.sp = (most_significant_byte << 8) | least_significant_byte;
                     }
+                    _ => panic!("Unimplemented load target"),
                 }
                 self.pc.wrapping_add(3)
             }
+            Instruction::LoadN8(target) => {
+                match target {
+                    Target::B => {
+                        self.registers.b = mmu.read_byte(self.pc + 1);
+                    }
+                    Target::D => {
+                        self.registers.d = mmu.read_byte(self.pc + 1);
+                    }
+                    Target::H => {
+                        self.registers.h = mmu.read_byte(self.pc + 1);
+                    }
+                    Target::HL => {
+                        let val = mmu.read_byte(self.pc + 1) as u16;
+                        self.registers.set_hl(val);
+                    }
+                    Target::C => {
+                        self.registers.c = mmu.read_byte(self.pc + 1);
+                    }
+                    Target::E => {
+                        self.registers.e = mmu.read_byte(self.pc + 1);
+                    }
+                    Target::L => {
+                        self.registers.l = mmu.read_byte(self.pc + 1);
+                    }
+                    Target::A => {
+                        self.registers.a = mmu.read_byte(self.pc + 1);
+                    }
+                    _ => panic!("Unimplemented loadN8 target"),
+                }
+                self.pc.wrapping_add(2)
+            }
             Instruction::Inc(target) => {
                 match target {
-                    IncTarget::BC => {
+                    Target::BC => {
                         let value = self.registers.get_bc();
                         self.registers.set_bc(value.wrapping_add(1));
                     }
-                    IncTarget::DE => {
+                    Target::DE => {
                         let value = self.registers.get_de();
                         self.registers.set_de(value.wrapping_add(1));
                     }
-                    IncTarget::HL => {
+                    Target::HL => {
                         let value = self.registers.get_hl();
                         self.registers.set_hl(value.wrapping_add(1));
                     }
-                    IncTarget::SP => {
+                    Target::SP => {
                         self.sp = self.sp.wrapping_add(1);
                     }
-                    IncTarget::B => {
+                    Target::B => {
                         let value = self.registers.b;
                         self.registers.b = self.registers.b.wrapping_add(1);
                         self.registers.f.zero = self.registers.b == 0;
                         self.registers.f.subtract = false;
                         self.registers.f.half_carry = (value & 0xF) + 1 > 0xF;
                     }
-                    IncTarget::D => {
+                    Target::D => {
                         let value = self.registers.d;
                         self.registers.d = self.registers.d.wrapping_add(1);
                         self.registers.f.zero = self.registers.d == 0;
                         self.registers.f.subtract = false;
                         self.registers.f.half_carry = (value & 0xF) + 1 > 0xF;
                     }
-                    IncTarget::H => {
+                    Target::H => {
                         let value = self.registers.h;
                         self.registers.h = self.registers.h.wrapping_add(1);
                         self.registers.f.zero = self.registers.h == 0;
                         self.registers.f.subtract = false;
                         self.registers.f.half_carry = (value & 0xF) + 1 > 0xF;
                     }
+                    _ => panic!("Unimplemented inc target"),
                 }
                 self.pc.wrapping_add(1)
             }
@@ -105,27 +138,28 @@ impl Cpu {
             }
             Instruction::Add(target) => {
                 match target {
-                    ArithmeticTarget::A => {
+                    Target::A => {
                         self.add(self.registers.a);
                     }
-                    ArithmeticTarget::B => {
+                    Target::B => {
                         self.add(self.registers.b);
                     }
-                    ArithmeticTarget::C => {
+                    Target::C => {
                         self.add(self.registers.c);
                     }
-                    ArithmeticTarget::D => {
+                    Target::D => {
                         self.add(self.registers.d);
                     }
-                    ArithmeticTarget::E => {
+                    Target::E => {
                         self.add(self.registers.e);
                     }
-                    ArithmeticTarget::H => {
+                    Target::H => {
                         self.add(self.registers.h);
                     }
-                    ArithmeticTarget::L => {
+                    Target::L => {
                         self.add(self.registers.l);
                     }
+                    _ => panic!("Unimplemented add target"),
                 }
                 self.pc.wrapping_add(1)
             }
@@ -159,199 +193,203 @@ impl Cpu {
             Instruction::JumpHl() => self.registers.get_hl(),
             Instruction::RotateLeftCircular(target) => {
                 match target {
-                    ArithmeticTarget::A => {
+                    Target::A => {
                         let msb = (self.registers.a & 0b1000_0000) >> 7;
                         self.registers.a = (self.registers.a << 1) | msb;
                         self.registers.f.carry = msb == 1;
                     }
-                    ArithmeticTarget::B => {
+                    Target::B => {
                         let msb = (self.registers.b & 0b1000_0000) >> 7;
                         self.registers.b = (self.registers.b << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.b == 0;
                     }
-                    ArithmeticTarget::C => {
+                    Target::C => {
                         let msb = (self.registers.c & 0b1000_0000) >> 7;
                         self.registers.c = (self.registers.c << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.c == 0;
                     }
-                    ArithmeticTarget::D => {
+                    Target::D => {
                         let msb = (self.registers.d & 0b1000_0000) >> 7;
                         self.registers.d = (self.registers.d << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.d == 0;
                     }
-                    ArithmeticTarget::E => {
+                    Target::E => {
                         let msb = (self.registers.e & 0b1000_0000) >> 7;
                         self.registers.e = (self.registers.e << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.e == 0;
                     }
-                    ArithmeticTarget::H => {
+                    Target::H => {
                         let msb = (self.registers.h & 0b1000_0000) >> 7;
                         self.registers.h = (self.registers.h << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.h == 0;
                     }
-                    ArithmeticTarget::L => {
+                    Target::L => {
                         let msb = (self.registers.l & 0b1000_0000) >> 7;
                         self.registers.l = (self.registers.l << 1) | msb;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.l == 0;
                     }
+                    _ => panic!("Unimplemented rotate left circular target"),
                 }
                 self.pc.wrapping_add(1)
             }
             Instruction::RotateRightCircular(target) => {
                 match target {
-                    ArithmeticTarget::A => {
+                    Target::A => {
                         let lsb = self.registers.a & 0b0000_0001;
                         self.registers.a >>= 1;
                         self.registers.a |= lsb << 7;
                         self.registers.f.carry = lsb == 1;
                     }
-                    ArithmeticTarget::B => {
+                    Target::B => {
                         let lsb = self.registers.b & 0b0000_0001;
                         self.registers.b >>= 1;
                         self.registers.b |= lsb << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.b == 0;
                     }
-                    ArithmeticTarget::C => {
+                    Target::C => {
                         let lsb = self.registers.c & 0b0000_0001;
                         self.registers.c >>= 1;
                         self.registers.c |= lsb << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.c == 0;
                     }
-                    ArithmeticTarget::D => {
+                    Target::D => {
                         let lsb = self.registers.d & 0b0000_0001;
                         self.registers.d >>= 1;
                         self.registers.d |= lsb << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.d == 0;
                     }
-                    ArithmeticTarget::E => {
+                    Target::E => {
                         let lsb = self.registers.e & 0b0000_0001;
                         self.registers.e >>= 1;
                         self.registers.e |= lsb << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.e == 0;
                     }
-                    ArithmeticTarget::H => {
+                    Target::H => {
                         let lsb = self.registers.h & 0b0000_0001;
                         self.registers.h >>= 1;
                         self.registers.h |= lsb << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.h == 0;
                     }
-                    ArithmeticTarget::L => {
+                    Target::L => {
                         let lsb = self.registers.l & 0b0000_0001;
                         self.registers.l >>= 1;
                         self.registers.l |= lsb << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.l == 0;
                     }
+                    _ => panic!("Unimplemented rotate right circular target"),
                 }
                 self.pc.wrapping_add(1)
             }
             Instruction::RotateLeft(target) => {
                 match target {
-                    ArithmeticTarget::A => {
+                    Target::A => {
                         let msb = (self.registers.a & 0b1000_0000) >> 7;
                         self.registers.a = (self.registers.a << 1) | self.registers.f.carry as u8;
                         self.registers.f.carry = msb == 1;
                     }
-                    ArithmeticTarget::B => {
+                    Target::B => {
                         let msb = (self.registers.b & 0b1000_0000) >> 7;
                         self.registers.b = (self.registers.b << 1) | self.registers.f.carry as u8;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.b == 0;
                     }
-                    ArithmeticTarget::C => {
+                    Target::C => {
                         let msb = (self.registers.c & 0b1000_0000) >> 7;
                         self.registers.c = (self.registers.c << 1) | self.registers.f.carry as u8;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.c == 0;
                     }
-                    ArithmeticTarget::D => {
+                    Target::D => {
                         let msb = (self.registers.d & 0b1000_0000) >> 7;
                         self.registers.d = (self.registers.d << 1) | self.registers.f.carry as u8;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.d == 0;
                     }
-                    ArithmeticTarget::E => {
+                    Target::E => {
                         let msb = (self.registers.e & 0b1000_0000) >> 7;
                         self.registers.e = (self.registers.e << 1) | self.registers.f.carry as u8;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.e == 0;
                     }
-                    ArithmeticTarget::H => {
+                    Target::H => {
                         let msb = (self.registers.h & 0b1000_0000) >> 7;
                         self.registers.h = (self.registers.h << 1) | self.registers.f.carry as u8;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.h == 0;
                     }
-                    ArithmeticTarget::L => {
+                    Target::L => {
                         let msb = (self.registers.l & 0b1000_0000) >> 7;
                         self.registers.l = (self.registers.l << 1) | self.registers.f.carry as u8;
                         self.registers.f.carry = msb == 1;
                         self.registers.f.zero = self.registers.l == 0;
                     }
+                    _ => panic!("Unimplemented rotate left target"),
                 }
                 self.pc.wrapping_add(1)
             }
             Instruction::RotateRight(target) => {
                 match target {
-                    ArithmeticTarget::A => {
+                    Target::A => {
                         let lsb = self.registers.a & 0b0000_0001;
                         self.registers.a >>= 1;
                         self.registers.a |= (self.registers.f.carry as u8) << 7;
                         self.registers.f.carry = lsb == 1;
                     }
-                    ArithmeticTarget::B => {
+                    Target::B => {
                         let lsb = self.registers.b & 0b0000_0001;
                         self.registers.b >>= 1;
                         self.registers.b |= (self.registers.f.carry as u8) << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.b == 0;
                     }
-                    ArithmeticTarget::C => {
+                    Target::C => {
                         let lsb = self.registers.c & 0b0000_0001;
                         self.registers.c >>= 1;
                         self.registers.c |= (self.registers.f.carry as u8) << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.c == 0;
                     }
-                    ArithmeticTarget::D => {
+                    Target::D => {
                         let lsb = self.registers.d & 0b0000_0001;
                         self.registers.d >>= 1;
                         self.registers.d |= (self.registers.f.carry as u8) << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.d == 0;
                     }
-                    ArithmeticTarget::E => {
+                    Target::E => {
                         let lsb = self.registers.e & 0b0000_0001;
                         self.registers.e >>= 1;
                         self.registers.e |= (self.registers.f.carry as u8) << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.e == 0;
                     }
-                    ArithmeticTarget::H => {
+                    Target::H => {
                         let lsb = self.registers.h & 0b0000_0001;
                         self.registers.h >>= 1;
                         self.registers.h |= (self.registers.f.carry as u8) << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.h == 0;
                     }
-                    ArithmeticTarget::L => {
+                    Target::L => {
                         let lsb = self.registers.l & 0b0000_0001;
                         self.registers.l >>= 1;
                         self.registers.l |= (self.registers.f.carry as u8) << 7;
                         self.registers.f.carry = lsb == 1;
                         self.registers.f.zero = self.registers.l == 0;
                     }
+                    _ => panic!("Unimplemented rotate right target"),
                 }
                 self.pc.wrapping_add(1)
             }
@@ -396,7 +434,11 @@ enum JumpTest {
 }
 
 #[derive(Debug)]
-enum ArithmeticTarget {
+enum Target {
+    BC,
+    DE,
+    HL,
+    SP,
     A,
     B,
     C,
@@ -407,39 +449,24 @@ enum ArithmeticTarget {
 }
 
 #[derive(Debug)]
-enum LoadTarget {
-    SP,
-}
-
-#[derive(Debug)]
-enum IncTarget {
-    BC,
-    DE,
-    HL,
-    SP,
-    B,
-    D,
-    H,
-}
-
-#[derive(Debug)]
 enum Instruction {
     Nop(),
-    Inc(IncTarget),
+    Inc(Target),
     IncHl(),
-    Add(ArithmeticTarget),
+    Add(Target),
     AddHl(),
     Jump(JumpTest),
     JumpHl(),
     Halt(),
-    RotateLeftCircular(ArithmeticTarget),
-    RotateRightCircular(ArithmeticTarget),
-    RotateLeft(ArithmeticTarget),
-    RotateRight(ArithmeticTarget),
+    RotateLeftCircular(Target),
+    RotateRightCircular(Target),
+    RotateLeft(Target),
+    RotateRight(Target),
     DisableInterrupt(),
     EnableInterrupts(),
-    Load(LoadTarget),
+    Load(Target),
     LoadIntoMemory(),
+    LoadN8(Target),
 }
 
 impl Instruction {
@@ -453,34 +480,34 @@ impl Instruction {
 
     fn from_byte_prefixed(byte: u8) -> Option<Self> {
         match byte {
-            0x00 => Some(Instruction::RotateLeftCircular(ArithmeticTarget::B)),
-            0x01 => Some(Instruction::RotateLeftCircular(ArithmeticTarget::C)),
-            0x02 => Some(Instruction::RotateLeftCircular(ArithmeticTarget::D)),
-            0x03 => Some(Instruction::RotateLeftCircular(ArithmeticTarget::E)),
-            0x04 => Some(Instruction::RotateLeftCircular(ArithmeticTarget::H)),
-            0x05 => Some(Instruction::RotateLeftCircular(ArithmeticTarget::L)),
-            0x07 => Some(Instruction::RotateLeftCircular(ArithmeticTarget::A)),
-            0x08 => Some(Instruction::RotateRightCircular(ArithmeticTarget::B)),
-            0x09 => Some(Instruction::RotateRightCircular(ArithmeticTarget::C)),
-            0x0A => Some(Instruction::RotateRightCircular(ArithmeticTarget::D)),
-            0x0B => Some(Instruction::RotateRightCircular(ArithmeticTarget::E)),
-            0x0C => Some(Instruction::RotateRightCircular(ArithmeticTarget::H)),
-            0x0D => Some(Instruction::RotateRightCircular(ArithmeticTarget::L)),
-            0x0F => Some(Instruction::RotateRightCircular(ArithmeticTarget::A)),
-            0x10 => Some(Instruction::RotateLeft(ArithmeticTarget::B)),
-            0x11 => Some(Instruction::RotateLeft(ArithmeticTarget::C)),
-            0x12 => Some(Instruction::RotateLeft(ArithmeticTarget::D)),
-            0x13 => Some(Instruction::RotateLeft(ArithmeticTarget::E)),
-            0x14 => Some(Instruction::RotateLeft(ArithmeticTarget::H)),
-            0x15 => Some(Instruction::RotateLeft(ArithmeticTarget::L)),
-            0x17 => Some(Instruction::RotateLeft(ArithmeticTarget::A)),
-            0x18 => Some(Instruction::RotateRight(ArithmeticTarget::B)),
-            0x19 => Some(Instruction::RotateRight(ArithmeticTarget::C)),
-            0x1A => Some(Instruction::RotateRight(ArithmeticTarget::D)),
-            0x1B => Some(Instruction::RotateRight(ArithmeticTarget::E)),
-            0x1C => Some(Instruction::RotateRight(ArithmeticTarget::H)),
-            0x1D => Some(Instruction::RotateRight(ArithmeticTarget::L)),
-            0x1F => Some(Instruction::RotateRight(ArithmeticTarget::A)),
+            0x00 => Some(Instruction::RotateLeftCircular(Target::B)),
+            0x01 => Some(Instruction::RotateLeftCircular(Target::C)),
+            0x02 => Some(Instruction::RotateLeftCircular(Target::D)),
+            0x03 => Some(Instruction::RotateLeftCircular(Target::E)),
+            0x04 => Some(Instruction::RotateLeftCircular(Target::H)),
+            0x05 => Some(Instruction::RotateLeftCircular(Target::L)),
+            0x07 => Some(Instruction::RotateLeftCircular(Target::A)),
+            0x08 => Some(Instruction::RotateRightCircular(Target::B)),
+            0x09 => Some(Instruction::RotateRightCircular(Target::C)),
+            0x0A => Some(Instruction::RotateRightCircular(Target::D)),
+            0x0B => Some(Instruction::RotateRightCircular(Target::E)),
+            0x0C => Some(Instruction::RotateRightCircular(Target::H)),
+            0x0D => Some(Instruction::RotateRightCircular(Target::L)),
+            0x0F => Some(Instruction::RotateRightCircular(Target::A)),
+            0x10 => Some(Instruction::RotateLeft(Target::B)),
+            0x11 => Some(Instruction::RotateLeft(Target::C)),
+            0x12 => Some(Instruction::RotateLeft(Target::D)),
+            0x13 => Some(Instruction::RotateLeft(Target::E)),
+            0x14 => Some(Instruction::RotateLeft(Target::H)),
+            0x15 => Some(Instruction::RotateLeft(Target::L)),
+            0x17 => Some(Instruction::RotateLeft(Target::A)),
+            0x18 => Some(Instruction::RotateRight(Target::B)),
+            0x19 => Some(Instruction::RotateRight(Target::C)),
+            0x1A => Some(Instruction::RotateRight(Target::D)),
+            0x1B => Some(Instruction::RotateRight(Target::E)),
+            0x1C => Some(Instruction::RotateRight(Target::H)),
+            0x1D => Some(Instruction::RotateRight(Target::L)),
+            0x1F => Some(Instruction::RotateRight(Target::A)),
             _ => None,
         }
     }
@@ -488,24 +515,32 @@ impl Instruction {
     fn from_byte_non_prefixed(byte: u8) -> Option<Self> {
         match byte {
             0x00 => Some(Instruction::Nop()),
-            0x03 => Some(Instruction::Inc(IncTarget::BC)),
-            0x04 => Some(Instruction::Inc(IncTarget::B)),
-            0x13 => Some(Instruction::Inc(IncTarget::DE)),
-            0x14 => Some(Instruction::Inc(IncTarget::D)),
-            0x23 => Some(Instruction::Inc(IncTarget::HL)),
-            0x24 => Some(Instruction::Inc(IncTarget::H)),
-            0x31 => Some(Instruction::Load(LoadTarget::SP)),
-            0x33 => Some(Instruction::Inc(IncTarget::SP)),
+            0x03 => Some(Instruction::Inc(Target::BC)),
+            0x04 => Some(Instruction::Inc(Target::B)),
+            0x06 => Some(Instruction::LoadN8(Target::B)),
+            0x0E => Some(Instruction::LoadN8(Target::C)),
+            0x13 => Some(Instruction::Inc(Target::DE)),
+            0x14 => Some(Instruction::Inc(Target::D)),
+            0x16 => Some(Instruction::LoadN8(Target::D)),
+            0x1E => Some(Instruction::LoadN8(Target::E)),
+            0x23 => Some(Instruction::Inc(Target::HL)),
+            0x24 => Some(Instruction::Inc(Target::H)),
+            0x26 => Some(Instruction::LoadN8(Target::H)),
+            0x2E => Some(Instruction::LoadN8(Target::L)),
+            0x31 => Some(Instruction::Load(Target::SP)),
+            0x33 => Some(Instruction::Inc(Target::SP)),
             0x34 => Some(Instruction::IncHl()),
+            0x36 => Some(Instruction::LoadN8(Target::HL)),
+            0x3E => Some(Instruction::LoadN8(Target::A)),
             0x76 => Some(Instruction::Halt()),
-            0x80 => Some(Instruction::Add(ArithmeticTarget::B)),
-            0x81 => Some(Instruction::Add(ArithmeticTarget::C)),
-            0x82 => Some(Instruction::Add(ArithmeticTarget::D)),
-            0x83 => Some(Instruction::Add(ArithmeticTarget::E)),
-            0x84 => Some(Instruction::Add(ArithmeticTarget::H)),
-            0x85 => Some(Instruction::Add(ArithmeticTarget::L)),
+            0x80 => Some(Instruction::Add(Target::B)),
+            0x81 => Some(Instruction::Add(Target::C)),
+            0x82 => Some(Instruction::Add(Target::D)),
+            0x83 => Some(Instruction::Add(Target::E)),
+            0x84 => Some(Instruction::Add(Target::H)),
+            0x85 => Some(Instruction::Add(Target::L)),
             0x86 => Some(Instruction::AddHl()),
-            0x87 => Some(Instruction::Add(ArithmeticTarget::A)),
+            0x87 => Some(Instruction::Add(Target::A)),
             0xC2 => Some(Instruction::Jump(JumpTest::NotZero)),
             0xC3 => Some(Instruction::Jump(JumpTest::Always)),
             0xCA => Some(Instruction::Jump(JumpTest::Zero)),
@@ -582,10 +617,7 @@ mod tests {
     fn test_rotate_right_circular() {
         let mut cpu = Cpu::new();
         cpu.registers.b = 0b0000_0001;
-        cpu.execute_instruction(
-            &mut Mmu::new(),
-            Instruction::RotateRightCircular(ArithmeticTarget::B),
-        );
+        cpu.execute_instruction(&mut Mmu::new(), Instruction::RotateRightCircular(Target::B));
         assert_eq!(cpu.registers.b, 0b1000_0000);
         assert!(!cpu.registers.f.zero);
         assert!(cpu.registers.f.carry);
@@ -595,10 +627,7 @@ mod tests {
     fn test_rotate_left_circular() {
         let mut cpu = Cpu::new();
         cpu.registers.b = 0b1000_0000;
-        cpu.execute_instruction(
-            &mut Mmu::new(),
-            Instruction::RotateLeftCircular(ArithmeticTarget::B),
-        );
+        cpu.execute_instruction(&mut Mmu::new(), Instruction::RotateLeftCircular(Target::B));
         assert_eq!(cpu.registers.b, 0b0000_0001);
         assert!(!cpu.registers.f.zero);
         assert!(cpu.registers.f.carry);
@@ -608,10 +637,7 @@ mod tests {
     fn test_rotate_right() {
         let mut cpu = Cpu::new();
         cpu.registers.b = 0b0000_0001;
-        cpu.execute_instruction(
-            &mut Mmu::new(),
-            Instruction::RotateRight(ArithmeticTarget::B),
-        );
+        cpu.execute_instruction(&mut Mmu::new(), Instruction::RotateRight(Target::B));
         assert_eq!(cpu.registers.b, 0b0000_0000);
         assert!(cpu.registers.f.zero);
         assert!(cpu.registers.f.carry);
@@ -621,10 +647,7 @@ mod tests {
     fn test_rotate_left() {
         let mut cpu = Cpu::new();
         cpu.registers.b = 0b1000_0000;
-        cpu.execute_instruction(
-            &mut Mmu::new(),
-            Instruction::RotateLeft(ArithmeticTarget::B),
-        );
+        cpu.execute_instruction(&mut Mmu::new(), Instruction::RotateLeft(Target::B));
         assert_eq!(cpu.registers.b, 0b0000_0000);
         assert!(cpu.registers.f.zero);
         assert!(cpu.registers.f.carry);
