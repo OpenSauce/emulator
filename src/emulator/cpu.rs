@@ -70,8 +70,8 @@ impl Cpu {
                         self.registers.h = mmu.read_byte(self.pc + 1);
                     }
                     Target::HL => {
-                        let val = mmu.read_byte(self.pc + 1) as u16;
-                        self.registers.set_hl(val);
+                        let val = mmu.read_byte(self.pc + 1);
+                        mmu.set_byte(self.registers.get_hl(), val);
                     }
                     Target::C => {
                         self.registers.c = mmu.read_byte(self.pc + 1);
@@ -88,6 +88,14 @@ impl Cpu {
                     _ => panic!("Unimplemented loadN8 target"),
                 }
                 self.pc.wrapping_add(2)
+            }
+            Instruction::LoadHC() => {
+                mmu.set_byte(0xFF00 + self.registers.c as u16, self.registers.a);
+                self.pc.wrapping_add(1)
+            }
+            Instruction::LoadHA() => {
+                self.registers.a = mmu.read_byte(0xFF00 + self.registers.c as u16);
+                self.pc.wrapping_add(1)
             }
             Instruction::Inc(target) => {
                 match target {
@@ -408,6 +416,13 @@ impl Cpu {
                 self.ime = true;
                 self.pc.wrapping_add(1)
             }
+            Instruction::Restart(address) => {
+                self.sp = self.sp.wrapping_sub(1);
+                mmu.set_byte(self.sp, (self.pc >> 8) as u8);
+                self.sp = self.sp.wrapping_sub(1);
+                mmu.set_byte(self.sp, (self.pc & 0xFF) as u8);
+                address
+            }
         }
     }
 
@@ -467,6 +482,9 @@ enum Instruction {
     Load(Target),
     LoadIntoMemory(),
     LoadN8(Target),
+    LoadHC(),
+    LoadHA(),
+    Restart(u16),
 }
 
 impl Instruction {
@@ -518,7 +536,9 @@ impl Instruction {
             0x03 => Some(Instruction::Inc(Target::BC)),
             0x04 => Some(Instruction::Inc(Target::B)),
             0x06 => Some(Instruction::LoadN8(Target::B)),
+            0x07 => Some(Instruction::RotateLeft(Target::A)),
             0x0E => Some(Instruction::LoadN8(Target::C)),
+            0x0F => Some(Instruction::RotateRight(Target::A)),
             0x13 => Some(Instruction::Inc(Target::DE)),
             0x14 => Some(Instruction::Inc(Target::D)),
             0x16 => Some(Instruction::LoadN8(Target::D)),
@@ -546,10 +566,13 @@ impl Instruction {
             0xCA => Some(Instruction::Jump(JumpTest::Zero)),
             0xD2 => Some(Instruction::Jump(JumpTest::NotCarry)),
             0xDA => Some(Instruction::Jump(JumpTest::Carry)),
+            0xE0 => Some(Instruction::LoadHC()),
             0xEA => Some(Instruction::LoadIntoMemory()),
             0xE9 => Some(Instruction::JumpHl()),
+            0xF0 => Some(Instruction::LoadHA()),
             0xF3 => Some(Instruction::DisableInterrupt()),
             0xFB => Some(Instruction::EnableInterrupts()),
+            0xFF => Some(Instruction::Restart(0x38)),
             _ => None,
         }
     }
