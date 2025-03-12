@@ -1,6 +1,9 @@
-.PHONY: all fmt clippy
+.PHONY: all fmt clippy test
 
-all: clippy fmt
+all: clippy fmt test
+
+test:
+	cargo test
 
 fmt:
 	cargo fmt
