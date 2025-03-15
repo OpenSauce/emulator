@@ -47,6 +47,13 @@ impl Cpu {
                 println!("HALT not implemented");
                 self.pc.wrapping_add(1)
             }
+            Instruction::Return() => {
+                let low = mmu.read_byte(self.sp) as u16;
+                self.sp = self.sp.wrapping_add(1);
+                let high = mmu.read_byte(self.sp) as u16;
+                self.sp = self.sp.wrapping_add(1);
+                (high << 8) | low
+            }
             Instruction::Load(target) => {
                 match target {
                     Target::SP => {
@@ -492,6 +499,7 @@ enum Instruction {
     LoadHC(),
     LoadHA(),
     Restart(u16),
+    Return(),
 }
 
 impl Instruction {
@@ -572,6 +580,7 @@ impl Instruction {
             0xC2 => Some(Instruction::Jump(JumpTest::NotZero)),
             0xC3 => Some(Instruction::Jump(JumpTest::Always)),
             0xCA => Some(Instruction::Jump(JumpTest::Zero)),
+            0xC9 => Some(Instruction::Return()),
             0xD2 => Some(Instruction::Jump(JumpTest::NotCarry)),
             0xDA => Some(Instruction::Jump(JumpTest::Carry)),
             0xE0 => Some(Instruction::LoadHC()),
