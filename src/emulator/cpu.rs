@@ -431,10 +431,11 @@ impl Cpu {
                 self.pc.wrapping_add(1)
             }
             Instruction::Restart(address) => {
+                let return_pc = self.pc.wrapping_add(1);
                 self.sp = self.sp.wrapping_sub(1);
-                mmu.set_byte(self.sp, (self.pc >> 8) as u8);
+                mmu.set_byte(self.sp, (return_pc >> 8) as u8);
                 self.sp = self.sp.wrapping_sub(1);
-                mmu.set_byte(self.sp, (self.pc & 0xFF) as u8);
+                mmu.set_byte(self.sp, (return_pc & 0xFF) as u8);
                 address
             }
         }
