@@ -47,6 +47,13 @@ impl Cpu {
                 println!("HALT not implemented");
                 self.pc.wrapping_add(1)
             }
+            Instruction::Return() => {
+                let low = mmu.read_byte(self.sp) as u16;
+                self.sp = self.sp.wrapping_add(1);
+                let high = mmu.read_byte(self.sp) as u16;
+                self.sp = self.sp.wrapping_add(1);
+                (high << 8) | low
+            }
             Instruction::Load(target) => {
                 match target {
                     Target::SP => {
@@ -113,6 +120,13 @@ impl Cpu {
                     }
                     Target::SP => {
                         self.sp = self.sp.wrapping_add(1);
+                    }
+                    Target::A => {
+                        let value = self.registers.a;
+                        self.registers.a = self.registers.a.wrapping_add(1);
+                        self.registers.f.zero = self.registers.a == 0;
+                        self.registers.f.subtract = false;
+                        self.registers.f.half_carry = (value & 0xF) + 1 > 0xF;
                     }
                     Target::B => {
                         let value = self.registers.b;
@@ -485,6 +499,7 @@ enum Instruction {
     LoadHC(),
     LoadHA(),
     Restart(u16),
+    Return(),
 }
 
 impl Instruction {
@@ -551,6 +566,7 @@ impl Instruction {
             0x33 => Some(Instruction::Inc(Target::SP)),
             0x34 => Some(Instruction::IncHl()),
             0x36 => Some(Instruction::LoadN8(Target::HL)),
+            0x3C => Some(Instruction::Inc(Target::A)),
             0x3E => Some(Instruction::LoadN8(Target::A)),
             0x76 => Some(Instruction::Halt()),
             0x80 => Some(Instruction::Add(Target::B)),
@@ -564,6 +580,7 @@ impl Instruction {
             0xC2 => Some(Instruction::Jump(JumpTest::NotZero)),
             0xC3 => Some(Instruction::Jump(JumpTest::Always)),
             0xCA => Some(Instruction::Jump(JumpTest::Zero)),
+            0xC9 => Some(Instruction::Return()),
             0xD2 => Some(Instruction::Jump(JumpTest::NotCarry)),
             0xDA => Some(Instruction::Jump(JumpTest::Carry)),
             0xE0 => Some(Instruction::LoadHC()),
