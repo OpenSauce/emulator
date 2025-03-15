@@ -114,6 +114,13 @@ impl Cpu {
                     Target::SP => {
                         self.sp = self.sp.wrapping_add(1);
                     }
+                    Target::A => {
+                        let value = self.registers.a;
+                        self.registers.a = self.registers.a.wrapping_add(1);
+                        self.registers.f.zero = self.registers.a == 0;
+                        self.registers.f.subtract = false;
+                        self.registers.f.half_carry = (value & 0xF) + 1 > 0xF;
+                    }
                     Target::B => {
                         let value = self.registers.b;
                         self.registers.b = self.registers.b.wrapping_add(1);
@@ -551,6 +558,7 @@ impl Instruction {
             0x33 => Some(Instruction::Inc(Target::SP)),
             0x34 => Some(Instruction::IncHl()),
             0x36 => Some(Instruction::LoadN8(Target::HL)),
+            0x3C => Some(Instruction::Inc(Target::A)),
             0x3E => Some(Instruction::LoadN8(Target::A)),
             0x76 => Some(Instruction::Halt()),
             0x80 => Some(Instruction::Add(Target::B)),
